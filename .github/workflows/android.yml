@@ -10,20 +10,42 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    container:
-      image: barichello/godot-ci:4.4.1
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare build folder
-        run: mkdir -p build
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
 
-      - name: Build Android APK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android packages
         run: |
-          godot --headless --verbose \
-            --path . \
+          sdkmanager "platform-tools"
+          sdkmanager "build-tools;34.0.0"
+          sdkmanager "platforms;android-34"
+          sdkmanager "cmdline-tools;latest"
+          sdkmanager "cmake;3.10.2.4988404"
+          sdkmanager "ndk;23.2.8568313"
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.4.1
+          use-dotnet: false
+          include-templates: true
+
+      - name: Import project
+        run: godot --headless --editor --path . --quit
+
+      - name: Build APK
+        run: |
+          mkdir -p build
+          godot --headless --path . \
             --export-debug "Android" \
             build/SlimeRush.apk
 
